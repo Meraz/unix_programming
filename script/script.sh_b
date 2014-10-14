@@ -1,0 +1,29 @@
+#! /bin/sh
+
+ArgumentUse() {
+	echo "Function ArgumentUse";
+}
+
+
+# check if enough flags exists
+if [ $# -lt 1 ] ;
+	then
+		ArgumentUse;
+		exit 0;
+fi
+
+# check and set flags
+while getopts :qw option
+	do
+		case $option in
+		q)
+		echo "q is set";
+			;;
+		w)
+			echo "w is set";
+			;;
+		*)
+			ArgumentUse;
+			;;
+		esac
+	done
