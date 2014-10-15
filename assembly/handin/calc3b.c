@@ -18,10 +18,6 @@ int ex(nodeType *p) {
 			#ifdef MYDEBUG 
 				printf("typeCon\n"); 
 			#endif
-//				printf("\tmovl\t$%d, %%eax\n", p->con.value); 
-//				printf("\taddl\t$2147483648, %%eax # Add signed byte offset\n"); 
-//				printf("\tpushl\t%%eax\n");
-
 				printf("\tpushl\t$%d\n", p->con.value);
 			#ifdef MYDEBUG 
 				printf("/typeCon\n"); 
@@ -194,24 +190,29 @@ int ex(nodeType *p) {
 							#ifdef MYDEBUG 
 								printf("typeOpr:default:!=\n"); 
 							#endif						
+				//			printf("NE");
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter						
 							printf("\tcmpl\t%%eax, %%ebx\n");	
 							printf("\tjne"); // If not equal, continue, otherwise, jump
+						//	printf("\tjne L%03d\n", lbl);		// Jump to loop start
 							#ifdef MYDEBUG 
 								printf("/typeOpr:default:!=\n"); 
-							#endif					
+							#endif	
+							break;
 						case EQ:    									// == && !=
 							#ifdef MYDEBUG 
 							printf("typeOpr:default:==\n"); 
 							#endif
-					/*		
-							printf("FFFF\n");
+					//		printf("EQ");
+							
+						//	printf("FFFF\n");
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter						
 							printf("\tcmpl\t%%eax, %%ebx\n");								
+					
 							printf("\tje");
-					*/
+						//	printf("\tjge L%03d\n", lbl2 = lbl++);		// Jump to loop start
 							#ifdef MYDEBUG 
 							printf("/typeOpr:default:==\n"); 
 							#endif
