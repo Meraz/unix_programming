@@ -48,19 +48,18 @@ int ex(nodeType *p) {
 					printf("typeOpr:WHILE\n"); 
 					#endif
 					
-					printf("L%03d:\n", lbl1 = lbl++);
+					printf("L%03d:\n", lbl1 = lbl++);		// Loop condition check 
 					ex(p->opr.op[0]);
-					printf(" L%03d\n", lbl2 = lbl++);		// Jump
+					printf(" L%03d\n", lbl2 = lbl++);		// Jump to loop start
 					
 					// MY addition
-					printf("\tjmp L%03d\n", lbl3 = lbl++);			//
-					printf("L%03d:\n", lbl2);		//
-			//		printf("This is where I want");
+					printf("\tjmp L%03d\n", lbl3 = lbl++);	// Jump over content, skip while
+					printf("L%03d:\n", lbl2);				// Loop content start
 					// /MY addition
 			
 					ex(p->opr.op[1]);
-					printf("jmp L%03d\n", lbl1);
-					printf("L%03d:\n", lbl3);
+					printf("jmp L%03d\n", lbl1);			// Restart loop, jump to condition check
+					printf("L%03d:\n", lbl3);				// End destionation, jump here if exiting loop
 					
 					#ifdef MYDEBUG 
 					printf("/typeOpr:WHILE\n"); 
@@ -206,13 +205,13 @@ int ex(nodeType *p) {
 							#ifdef MYDEBUG 
 							printf("typeOpr:default:==\n"); 
 							#endif
-							
+					/*		
 							printf("FFFF\n");
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter						
 							printf("\tcmpl\t%%eax, %%ebx\n");								
 							printf("\tje");
-					
+					*/
 							#ifdef MYDEBUG 
 							printf("/typeOpr:default:==\n"); 
 							#endif
