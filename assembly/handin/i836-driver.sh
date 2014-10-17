@@ -71,6 +71,7 @@ echo '_start:' >> $OUTFILE
 cat $INFILE | ./calc3b.exe >> $OUTFILE
 
 echo "" 					>> $OUTFILE		# Empty row
+echo 'exit:' 		>> $OUTFILE
 echo 'movl $1,%eax' 		>> $OUTFILE
 echo 'int $0x80' 			>> $OUTFILE
 echo "" 					>> $OUTFILE		# Empty row
