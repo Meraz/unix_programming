@@ -1,0 +1,11 @@
+a=100;
+b=200;
+while(b > 0) {
+	if(a >= b) {
+		print a;
+		print b;
+	} 
+	b=b-1;
+}
+b=0;
+print b;
