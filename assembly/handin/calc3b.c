@@ -9,7 +9,7 @@ static int lbl;
 #endif
 
 int ex(nodeType *p) {
-    int lbl1, lbl2, lbl3;
+    int lbl1, lbl2;
 
     if (!p) return 0;
     switch(p->type) 
@@ -47,15 +47,10 @@ int ex(nodeType *p) {
 					printf("L%03d:\n", lbl1 = lbl++);		// Loop condition check 
 					ex(p->opr.op[0]);
 					printf(" L%03d\n", lbl2 = lbl++);		// Jump to loop start
-					
-					// MY addition
-					printf("\tjmp L%03d\n", lbl3 = lbl++);	// Jump over content, skip while
-					printf("L%03d:\n", lbl2);				// Loop content start
-					// /MY addition
-			
+								
 					ex(p->opr.op[1]);
 					printf("jmp L%03d\n", lbl1);			// Restart loop, jump to condition check
-					printf("L%03d:\n", lbl3);				// End destionation, jump here if exiting loop
+					printf("L%03d:\n", lbl2);				// End destionation, jump here if exiting loop
 					
 					#ifdef MYDEBUG 
 					printf("/typeOpr:WHILE\n"); 
@@ -104,8 +99,13 @@ int ex(nodeType *p) {
 					break;
 				case UMINUS:
 					ex(p->opr.op[0]);
-					printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
-					printf("\tneg\t%%eax\n");		// pop from stack to variable, second parameter
+					
+					printf("\tpopl\t%%eax\n");
+					printf("\txorl\t%%edx, %%edx\n");						
+					printf("\tmovl\t$-1, %%ecx\n");						
+					
+					printf("\tmull\t%%ecx\n");
+					printf("\tpushl\t%%eax\n");
 					
 				//	printf("\tneg\n");
 						break;
@@ -156,17 +156,17 @@ int ex(nodeType *p) {
 							printf("\tpushl\t%%eax\n");
 							break;			
 						case '/':   									// /
-							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
-							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter	
+							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, second parameter
+							printf("\tpopl\t%%eax\n");		// pop from stack to variable, first parameter	
 							printf("\txorl\t%%edx, %%edx\n");							
-							printf("\tdivl\t%%ebx\n");
-							printf("\tpushl\t%%ebx\n");
+							printf("\tidivl\t%%ebx\n");							
+							printf("\tpushl\t%%eax\n");					
 							break;			
 						case '<':  // <
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter					
 							printf("\tcmpl\t%%eax, %%ebx\n");
-							printf("\tjg");
+							printf("\tjge");				/// jg(e) equal comes from the inverse thinking, while condition is not true, do something. "DO A UNTIL B IS TRUE"
 						case '>':   									// >
 							#ifdef MYDEBUG 
 								printf("typeOpr:default:>\n"); 
@@ -174,7 +174,7 @@ int ex(nodeType *p) {
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter							
 							printf("\tcmpl\t%%eax, %%ebx\n");
-							printf("\tjl");
+							printf("\tjle");				// jl(e) equal comes from the inverse thinking, while condition is not true, do something. "DO A UNTIL B IS TRUE"
 							#ifdef MYDEBUG 
 							printf("/typeOpr:default:>\n"); 
 							#endif
@@ -183,19 +183,22 @@ int ex(nodeType *p) {
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter	
 							printf("\tcmpl\t%%eax, %%ebx\n");
-							printf("\tjge");
+							printf("\tjl");	
 							break;
-						case LE:    printf("\tLEcompLE\n"); break;		// <= in c code
-						case NE:   										// != This is used by the compiler, but for some reason the EQ flag is called after this aswell. And wierdly enough, this dosen't get a jump statement
+						case LE:   									 // <= in c code
+							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
+							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter	
+							printf("\tcmpl\t%%eax, %%ebx\n");
+							printf("\tjg");							
+						break;		
+						case NE:   							
 							#ifdef MYDEBUG 
 								printf("typeOpr:default:!=\n"); 
-							#endif						
-				//			printf("NE");
+							#endif			
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter						
 							printf("\tcmpl\t%%eax, %%ebx\n");	
-							printf("\tjne"); // If not equal, continue, otherwise, jump
-						//	printf("\tjne L%03d\n", lbl);		// Jump to loop start
+							printf("\tje"); // If not equal, continue, otherwise, jump
 							#ifdef MYDEBUG 
 								printf("/typeOpr:default:!=\n"); 
 							#endif	
@@ -204,15 +207,11 @@ int ex(nodeType *p) {
 							#ifdef MYDEBUG 
 							printf("typeOpr:default:==\n"); 
 							#endif
-					//		printf("EQ");
-							
-						//	printf("FFFF\n");
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
 							printf("\tpopl\t%%ebx\n");		// pop from stack to variable, first parameter						
 							printf("\tcmpl\t%%eax, %%ebx\n");								
 					
-							printf("\tje");
-						//	printf("\tjge L%03d\n", lbl2 = lbl++);		// Jump to loop start
+							printf("\tjne");
 							#ifdef MYDEBUG 
 							printf("/typeOpr:default:==\n"); 
 							#endif
