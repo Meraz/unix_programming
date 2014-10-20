@@ -106,8 +106,6 @@ int ex(nodeType *p) {
 					
 					printf("\tmull\t%%ecx\n");
 					printf("\tpushl\t%%eax\n");
-					
-				//	printf("\tneg\n");
 						break;
 				case FACT:
 					ex(p->opr.op[0]);

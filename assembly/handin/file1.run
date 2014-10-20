@@ -29,31 +29,15 @@ z: .long 0
 
 .section .text
 .globl _start
-_start:
-	pushl	$100
-	popl	i
-L000:
-	pushl	i
-	pushl	$0
-	popl	%eax
-	popl	%ebx
-	cmpl	%eax, %ebx
-	jge L001
-	jmp L002
-L001:
-	pushl	i
-	call print
-	addl	$4, %esp
-	pushl	i
-	pushl	$1
-	popl	%eax
-	popl	%ebx
-	subl	%eax, %ebx
-	pushl	%ebx
-	popl	i
-jmp L000
-L002:
+.globl print
 
+_start:
+	pushl	$5
+	call fact
+	push %eax
+	call print
+	
+exit:
 movl $1,%eax
 int $0x80
 
@@ -83,7 +67,7 @@ movl $4,%edx                            # Length of memory location in bytes. A 
 int  $0x80                              # System Call
 
 movl -4(%ebp), %eax						# Restores inparameter when doing negative values
-movl $4294967296, %ebx					# This row gives the warning
+movl $0xffffffff, %ebx					# This row gives the warning
 subl %eax, %ebx							# Subtract
 movl %ebx, %eax
 

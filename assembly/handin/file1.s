@@ -1,92 +1,119 @@
-.section .bss
-output: .long
-a: .long
-b: .long
-c: .long
-d: .long
-e: .long
-f: .long
-g: .long
-h: .long
-i: .long
-j: .long
-k: .long
-l: .long
-m: .long
-n: .long
-o: .long
-p: .long
-q: .long
-r: .long
-s: .long
-t: .long
-u: .long
-v: .long
-w: .long
-x: .long
-y: .long
-z: .long
-
 .section .data
-.globl main
-main:
-	pushl	$5
-	popl	i
-L000:
-	pushl	i
-	pushl	$0
-	popl	%eax
-	popl	%ebx
-	cmpl	 %eax, %ebx
-	jz	L001
-	pushl	i
+output: .long 0
+a: .long 0
+b: .long 0
+c: .long 0
+d: .long 0
+e: .long 0
+f: .long 0
+g: .long 0
+h: .long 0
+i: .long 0
+j: .long 0
+k: .long 0
+l: .long 0
+m: .long 0
+n: .long 0
+o: .long 0
+p: .long 0
+q: .long 0
+r: .long 0
+s: .long 0
+t: .long 0
+u: .long 0
+v: .long 0
+w: .long 0
+x: .long 0
+y: .long 0
+z: .long 0
+
+.section .text
+.globl _start
+_start:
+	push $5
+	push $10
+	call gcd
+	addl	$4, %esp
+	push %eax
 	call print
-		jmp exit
-	ADDL $4, %esp
-	jmp exit
-	pushl	i
-	pushl	$1
-	popl	%eax
-	popl	%ebx
-	subl	 %eax, %ebx
-	pushl	 %ebx
-	popl	i
-	jmp	L000
-L001:
+	addl	$4, %esp
 
 exit:
 movl $1,%eax
 int $0x80
 
 print:
-movl 4(%esp),%eax		# Get the first parameter
-movl $output, %ecx		# Get the adress of the working memory
-#pushl %ebp				# push returnpointer to the stack. (This is a function)
 
-xorl %esi,%esi			# Zero %esi. %esi = 0
+pushl %ebp				# push returnpointer to the stack. (This is a function)
+movl %esp, %ebp
+subl $8, %esp			# I need 2 local variables. %ebx when dividing
+
+movl 8(%ebp),%eax		# Get the first parameter
+movl %ebx, -8(%ebp)		# Must save this
+movl %eax, -4(%ebp) 	# Saves inparameter
+
+#if parameter MSB is set, negative, print negative sign, then jump loop
+#else if MSB is not set, positive, jump to loop
+test %eax, %eax
+js negative
+movl -4(%ebp), %eax						# Restores inparameter when printing positive values
+jmp preloop
+
+negative:
+movl $4,%eax                            # sys_write
+movl $1,%ebx                            # Filedescriptor, 1 is standard out
+movl $output, %ecx                      # Get the adress of the working memory
+movl $45, (%ecx)                        # -
+movl $4,%edx                            # Length of memory location in bytes. A long, 4 bytes
+int  $0x80                              # System Call
+
+movl -4(%ebp), %eax						# Restores inparameter when doing negative values
+movl $0xffffffff, %ebx					# Add maximum to the %ebx register
+subl %eax, %ebx							# Subtract from max
+movl %ebx, %eax
+
+preloop:
+movl $0, -4(%ebp)			# Zero %counter. %counter = 0
 
 loop:
 xorl %edx,%edx			# Zero %edx. %edx = 0
-movl $10,%ebx			#
-divl %ebx				# dividing, result in %eax (123) and remainder in %edx (4)
+movl $10,%ecx			# %ebx = 10
+divl %ecx				# dividing, result in %eax (123) and remainder in %edx (4)
 addl $48,%edx			# +48. Convert into ascii
 pushl %edx				# on stack
-incl %esi				# counter of digits
+movl -4(%ebp), %ecx		# Get the current counter from memory
+incl %ecx				# Increase the counter of digits
+movl %ecx, -4(%ebp)		# Return the counter to memory
 cmpl $0,%eax			# If eax is zero after division, no more digits	
 jz   next				# If zero, then all individual digits are found.
 jmp loop				# Otherwise, keep the loop going
 
-next:				#
-popl (%ecx)			# Get the value on the stack and overwrite the adress that %ecx is pointing to
-testl %esi,%esi		# if(%esi == 0)
-jz   functionReturn	#  return()
-decl %esi			# Decrease %esi. %esi = %esi - 1
-movl $4,%eax		# sys_write
-movl $1,%ebx		# Filedescriptor, 1 is standard out
-movl $2,%edx		# 
-int  $0x80			# System Call 
+next:						#
+movl -4(%ebp), %ecx			# Get the current counter from memory
+testl %ecx,%ecx				# if(%ecx == 0)
+jz   functionReturn			#  return()
+decl %ecx					# Decrease the counter of digits
+movl %ecx, -4(%ebp)			# Return the counter to memory
+movl $4,%eax				# sys_write
+movl $1,%ebx				# Filedescriptor, 1 is standard out
+movl $output, %ecx			# Get the adress of the working memory
+popl (%ecx)						# Get the value on the stack and overwrite the value of the adress that %ecx is pointing to
+movl $4,%edx				# Length of memory location in bytes. A long, 4 bytes
+int  $0x80					# System Call 
+
 jmp  next
 functionReturn:
+							# Print a newline after each complete integer
+movl $4,%eax				# sys_write
+movl $1,%ebx				# Filedescriptor, 1 is standard out
+movl $output, %ecx			# Get the adress of the working memory
+movl $10, (%ecx)			# Newline
+movl $4,%edx				# Length of memory location in bytes. A long, 4 bytes
+int  $0x80					# System Call 
 
-movl $0, %eax
+movl -8(%ebp), %ebx			# Restore this
+movl $0, %eax				# Result
+
+leave
 ret
+

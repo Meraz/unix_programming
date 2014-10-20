@@ -1,6 +1,6 @@
 #! /bin/bash
 
-OUTFILE='file1.run'
+OUTFILE='file1.s'
 
 ArgumentUse() {
 	echo "i836-driver.sh <filename>\n"
@@ -75,7 +75,7 @@ echo 'exit:' 		>> $OUTFILE
 echo 'movl $1,%eax' 		>> $OUTFILE
 echo 'int $0x80' 			>> $OUTFILE
 echo "" 					>> $OUTFILE		# Empty row
-cat onlyThePrintFunction.txt >> $OUTFILE
+cat onlyThePrintFunction.s >> $OUTFILE
 echo "" 					>> $OUTFILE		# Empty row in the end, needed
 
 
