@@ -261,9 +261,6 @@ then
 	cat $INFILE | cut -d " " -f 1,10 | grep -v - > $file                 # Kopiera orginalfilen till en tempfil, spara endast fält 1 och 10. IP och BYTE's
 	cat $INFILE | cut -d " " -f 1 | sort | uniq > $singleOccurence       # Saves one entry of all unique
 
-#	cat $INFILE > /dev/stdout
-#exit
-
 	while read ip # For each ip in $file
 	do
 	        tmp=`mktemp`                                    # Creates an temp fil

@@ -1,6 +1,5 @@
 a=732;
 b=2684;
-
 while(a != b) {
   if(a > b) {
     a=a-b;
@@ -10,4 +9,5 @@ while(a != b) {
 }
 print a;
 
+print a gcd b;
 

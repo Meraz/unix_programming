@@ -7,14 +7,10 @@ while(n > 0) {
     d=n;
     t=1;
   } else {
-    d= n * -1;
+    d=-n;
     t=0;
   }
   a=a+s/d;
   n=n-2;
-  b=b+1;
 }
-print a;
-print s;
-print b;
 print a/(s/100000)*4;

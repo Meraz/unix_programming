@@ -110,10 +110,14 @@ int ex(nodeType *p) {
 				case FACT:
 					ex(p->opr.op[0]);
 					printf("\tcall fact\n");
+					printf("\taddl $%d, %%esp\n", 8);
+					printf("\tpushl %%eax\n");
 					break;
 				case LNTWO:
 					ex(p->opr.op[0]);
 					printf("\t call lntwo\n");
+					printf("\taddl $%d, %%esp\n", 8);
+					printf("\tpushl %%eax\n");
 					break;
 				default:
 					#ifdef MYDEBUG
@@ -127,6 +131,7 @@ int ex(nodeType *p) {
 						case GCD:
 								printf("\tcall gcd\n");
 								printf("\taddl $%d, %%esp\n", 8);
+								printf("\tpushl %%eax\n");
 								break;
 						case '+':   									// +
 							printf("\tpopl\t%%eax\n");		// pop from stack to variable, second parameter
