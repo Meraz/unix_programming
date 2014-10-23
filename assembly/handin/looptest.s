@@ -32,25 +32,6 @@ z: .long 0
 _start:
 	pushl	$100
 	popl	i
-L000:
-	pushl	i
-	pushl	$0
-	popl	%eax
-	popl	%ebx
-	cmpl	%eax, %ebx
-	jl L001
-	pushl	i
-	call print
-	addl	$4, %esp
-	pushl	i
-	pushl	$1
-	popl	%eax
-	popl	%ebx
-	subl	%eax, %ebx
-	pushl	%ebx
-	popl	i
-jmp L000
-L001:
 
 exit:
 movl $1,%eax

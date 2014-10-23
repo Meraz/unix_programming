@@ -30,7 +30,7 @@ z: .long 0
 .section .text
 .globl _start
 _start:
-	pushl	$1000
+	pushl	$32
 	popl	b
 	pushl	b
 	 call lntwo

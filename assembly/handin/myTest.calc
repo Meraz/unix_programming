@@ -1,2 +1,2 @@
-b=1000;
+b=32;
 print lntwo b;
