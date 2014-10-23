@@ -1,0 +1,12 @@
+socket = socket();
+setsockopt();
+bind();
+listen();
+loop
+{
+	new_socket = accept();
+	recv();
+	send();
+	
+	close();
+}
