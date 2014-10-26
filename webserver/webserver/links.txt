@@ -1,0 +1,6 @@
+Problem with PATH_MAX
+http://insanecoding.blogspot.se/2007/11/pathmax-simply-isnt.html
+
+Common Log Format
+http://en.wikipedia.org/wiki/Common_Log_Format
+nano 
