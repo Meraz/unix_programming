@@ -14,12 +14,19 @@
 #include <limits.h>
 #include <fcntl.h>
 
+// pthreads
+#include <pthread.h>
+
+// User defined
+#include "logger.h"
+
+#define BUFFSIZE 1024
 #define BACKLOG 20		// TODO eh?
-#define BUFSIZE 1024	// eh?
+#define CONFIG_FILE_BUFFER_SIZE 1024
+
 #ifndef MYDEBUG
 //#define MYDEBUG
 #endif
-
 
 // TODO do something about this
 extern char request_ok[];
@@ -41,15 +48,15 @@ void set_ws_root_directory();
 void parse_arguments();
 void wait_for_connection();
 
-char* executing_directory;
+char* executing_directory;		// Webserver executing directory
 char* ws_root_directory;		// TODO path_max // Webserver root directory
-char* listening_port;
+char* listening_port;			// listening port
 
 int main(int argc, char* argv[])
 {
 	// Allocate stuff
-	ws_root_directory = malloc(PATH_MAX);	// TODO path_max
-	listening_port = malloc(5);
+	ws_root_directory = malloc(PATH_MAX);	// TODO path_max, 
+	listening_port = malloc(5);				//
 
 	// Default values 
 	executing_directory = getenv("PWD");				// Get current directory
@@ -62,7 +69,7 @@ int main(int argc, char* argv[])
 	printf("Port: %s\n", listening_port);
 	printf("Root directory: %s\n", ws_root_directory);
 	printf("\nStarting server\n");
-	
+		
 	// Start the server
 	start_server();	
 	printf("Ready for connections...\n");
@@ -152,14 +159,15 @@ void start_server()
 void handle_request(int sock_current)
 {
 	int reqlen, i, open_file, bytes_read;
-	char *msg_buffer = malloc(BUFSIZE);
-	char send_buffer[BUFSIZE];
+	char *msg_buffer = malloc(BUFFSIZE);
+	char send_buffer[BUFFSIZE];
 	char *reqtype, *reqpath, *reqver;
 	char *path;
 	char rpbuf[PATH_MAX];
 
-	reqlen = recv(sock_current, msg_buffer, BUFSIZE, 0);
-
+	reqlen = recv(sock_current, msg_buffer, BUFFSIZE, 0);
+	accessLog(msg_buffer);
+	
 	if(reqlen == -1 || reqlen == 0)
 	{
 		//LOG error
@@ -169,12 +177,16 @@ void handle_request(int sock_current)
 	{
 		reqtype = strtok(msg_buffer, " \t\n");
 		
+		printf("\nreqtype:%s\n", reqtype);
+		
 		//If request is not GET, close socket and exit child process
 		if(strncmp(reqtype, "GET\0", 4) == 0 || strncmp(reqtype, "get\0", 4) == 0)
 		{
 			//Split string into tokens http://www.cplusplus.com/reference/cstring/strtok/
 			reqpath = strtok(NULL, " \t");
+			printf("\nreqpath:%s\n", reqpath);
 			reqver = strtok(NULL, " \t\n");
+			printf("\nreqver:%s\n", reqver);
 			
 			// Compare characters of two strings http://www.cplusplus.com/reference/cstring/strncmp/
 			if((strncmp(reqver, "HTTP/1.0", 8) != 0 && strncmp(reqver, "HTTP/1.1", 8) != 0))
@@ -203,7 +215,7 @@ void handle_request(int sock_current)
 					{
 						perror("send, 200");
 					}
-					while((bytes_read = read(open_file, send_buffer, BUFSIZE)) > 0)
+					while((bytes_read = read(open_file, send_buffer, BUFFSIZE)) > 0)
 					{
 						send(sock_current, send_buffer, bytes_read, 0);
 					}
@@ -235,17 +247,16 @@ void handle_request(int sock_current)
 	}
 }
 
-
 void read_config_file()
 {
-	char file_buffer[BUFSIZE];
+	char file_buffer[CONFIG_FILE_BUFFER_SIZE];
 	// Read config file
 	config_file = fopen(".lab3-config", "r");			// r is flag for reading, file must exist
 	if(config_file != NULL)
 	{
 		while(!feof(config_file))
 		{
-			fgets(file_buffer, BUFSIZE, config_file);
+			fgets(file_buffer, CONFIG_FILE_BUFFER_SIZE, config_file);
 			if(strncmp(file_buffer, "port=", 5) == 0)
 			{
 				//TODO clean up the buffer/string
@@ -311,7 +322,7 @@ void wait_for_connection()
 		addrlen = sizeof(client_address);
 		if((sock_current = accept(sock, (struct sockaddr*) &client_address, &addrlen)) == -1)
 		{
-			perror("accept");	// TODO should maybe specify more?
+			perror("accept");	// TODO should maybe specify more? error on accept or did accept work?
 		}
 		
 		printf("Request from %s\n", inet_ntoa(client_address.sin_addr));
