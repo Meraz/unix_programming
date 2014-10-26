@@ -52,6 +52,14 @@ char* executing_directory;		// Webserver executing directory
 char* ws_root_directory;		// TODO path_max // Webserver root directory
 char* listening_port;			// listening port
 
+/*
+typedef struct server			// If we might need to rethink this?
+{
+	time_t cur_ts;
+	
+} server;
+*/
+
 int main(int argc, char* argv[])
 {
 	// Allocate stuff
@@ -164,6 +172,8 @@ void handle_request(int sock_current)
 	char *reqtype, *reqpath, *reqver;
 	char *path;
 	char rpbuf[PATH_MAX];
+	
+	char callType[4] = "GET";	// TODO do not hardcode this
 
 	reqlen = recv(sock_current, msg_buffer, BUFFSIZE, 0);
 	accessLog(msg_buffer);
@@ -177,16 +187,24 @@ void handle_request(int sock_current)
 	{
 		reqtype = strtok(msg_buffer, " \t\n");
 		
-		printf("\nreqtype:%s\n", reqtype);
+
+#ifdef MYDEBUG
+printf("\nreqtype:%s\n", reqtype);
+#endif
 		
 		//If request is not GET, close socket and exit child process
-		if(strncmp(reqtype, "GET\0", 4) == 0 || strncmp(reqtype, "get\0", 4) == 0)
+		if(strncmp(reqtype, "GET\0", 4) == 0 || strncmp(reqtype, "get\0", 4) == 0)			// Check if first is GET
 		{
+
 			//Split string into tokens http://www.cplusplus.com/reference/cstring/strtok/
 			reqpath = strtok(NULL, " \t");
-			printf("\nreqpath:%s\n", reqpath);
+#ifdef MYDEBUG
+printf("reqpath:%s\n", reqpath);
+#endif
 			reqver = strtok(NULL, " \t\n");
-			printf("\nreqver:%s\n", reqver);
+#ifdef MYDEBUG
+printf("reqver:%s\n", reqver);
+#endif
 			
 			// Compare characters of two strings http://www.cplusplus.com/reference/cstring/strncmp/
 			if((strncmp(reqver, "HTTP/1.0", 8) != 0 && strncmp(reqver, "HTTP/1.1", 8) != 0))
@@ -210,19 +228,22 @@ void handle_request(int sock_current)
 				
 				if((open_file = open(path, O_RDONLY)) != -1)
 				{
-					//File found, return 200 and file
+					// File found, return status message 200 
 					if(send(sock_current, request_ok, strlen(request_ok), 0) == -1)
 					{
 						perror("send, 200");
 					}
+					// send datafile
 					while((bytes_read = read(open_file, send_buffer, BUFFSIZE)) > 0)
 					{
 						send(sock_current, send_buffer, bytes_read, 0);
+						// log. bytes_read can be accessed here. if one accumulates this for every send, this should be the correct size for the file
+						// if the c call fopen is used instead of the system call open one get backs an FD (filedescriptor, this has the size of the file)
 					}
 				}
 				else
 				{
-					//File not found, return 404
+					// File not found, return 404
 					if(send(sock_current, not_found, strlen(not_found), 0) == -1)
 					{
 						perror("send, 404");
@@ -230,15 +251,16 @@ void handle_request(int sock_current)
 				}
 			}
 		}
-		else if(strncmp(reqtype, "HEAD\0", 5) == 0 || strncmp(reqtype, "head\0", 5) == 0)
+		else if(strncmp(reqtype, "HEAD\0", 5) == 0 || strncmp(reqtype, "head\0", 5) == 0)		// Check if the call is of the HEAD type
 		{
 		
 		}
-		else
+		else	// not GET or HEAD, return 501
 		{
-			//Not implemented, return 501
+			// This is not implemented, return 501
 			if(send(sock_current, not_implemented, strlen(not_implemented), 0) == -1)
 			{
+				// Log this
 				perror("send, 501");
 			}
 			//LOG the fact that this wasn't GET or HEAD
@@ -274,6 +296,7 @@ void read_config_file()
 	else
 	{
 		perror("could not open file");
+		// Log this
 	}
 	fclose(config_file);
 }
