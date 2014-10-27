@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
 
 #include <unistd.h>
 #include <netinet/in.h>
@@ -234,11 +235,12 @@ printf("reqver:%s\n", reqver);
 						perror("send, 200");
 					}
 					// send datafile
-					while((bytes_read = read(open_file, send_buffer, BUFFSIZE)) > 0)
+			//		while((bytes_read = read(open_file, send_buffer, BUFFSIZE)) > 0)
 					{
-						send(sock_current, send_buffer, bytes_read, 0);
-						// log. bytes_read can be accessed here. if one accumulates this for every send, this should be the correct size for the file
-						// if the c call fopen is used instead of the system call open one get backs an FD (filedescriptor, this has the size of the file)
+						// Why sendfile is better than send
+							// http://stackoverflow.com/questions/4129536/webserver-in-c-how-to-send-an-image/4129584#4129584
+						sendfile(sock_current, open_file, NULL, /*filesize*/244);		// TODO remove hardcoded filesize, this is done with stat.
+					//	send(sock_current, send_buffer, bytes_read, 0);
 					}
 				}
 				else
