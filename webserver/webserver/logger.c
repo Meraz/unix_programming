@@ -1,5 +1,6 @@
 #include "logger.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -25,14 +26,16 @@ void accessLog(const char* adress, unsigned int size)				// Thread safe? I think
 /*
 	Some attempts to get the data from the buffer as needed, seems like it's easier to log just before returning data though.
 */
+	char* bufferToWrite = malloc(100*sizeof(char));
+	strncpy(bufferToWrite, adress, 12);
 //	char *getCall, *ipAdress;
 //	getCall = strcat(strtok(buffer, " \t\n"), strtok(buffer, " \t\n"));
 //	getCall = strtok(NULL, " \t\n");
 //	printf("\na:%s\n", getCall);
 
 	// This works for the moment, but ONLY if runned as root, this is probably why we need chroot.
-//	access_log_file = fopen("/var/log/testWServer.log", "a+"); 	// TODO undo hardcoded. 	
-//	fwrite(buffer, 50, 1, access_log_file);	
+	access_log_file = fopen("/var/log/testWServer.log", "a+"); 	// TODO undo hardcoded. 	
+	fwrite(bufferToWrite, 50, 1, access_log_file);	
 	
 	
 }

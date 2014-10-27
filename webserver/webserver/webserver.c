@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>	
 
 #include <unistd.h>
 #include <netinet/in.h>
@@ -236,9 +237,10 @@ printf("reqver:%s\n", reqver);
 					accessLog(loggable_adress, file_size);
 					
 					// send datafile
-					while((bytes_read = read(open_file, send_buffer, BUFFSIZE)) > 0)
+				//	while((bytes_read = read(open_file, send_buffer, BUFFSIZE)) > 0)
 					{
-						send(sock_current, send_buffer, bytes_read, 0);
+						sendfile(sock_current, open_file, NULL, file_size);
+					//	send(sock_current, send_buffer, bytes_read, 0);
 					}					
 				}
 				else
