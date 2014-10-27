@@ -20,7 +20,7 @@ size_t strftime (char* ptr, size_t maxsize, const char* format, const struct tm*
 static FILE* access_log_file;				// This is the CLF file
 //static const FILE* general_log_file;	´	// This file could be used for other kind of logging, example crashes 
 
-void accessLog(char* buffer)				// Thread safe? I think this is okay if we use forking.
+void accessLog(const char* adress, unsigned int size)				// Thread safe? I think this is okay if we use forking.
 {
 /*
 	Some attempts to get the data from the buffer as needed, seems like it's easier to log just before returning data though.
@@ -31,8 +31,8 @@ void accessLog(char* buffer)				// Thread safe? I think this is okay if we use f
 //	printf("\na:%s\n", getCall);
 
 	// This works for the moment, but ONLY if runned as root, this is probably why we need chroot.
-	access_log_file = fopen("/var/log/testWServer.log", "a+"); 	// TODO undo hardcoded. 	
-	fwrite(buffer, 50, 1, access_log_file);	
+//	access_log_file = fopen("/var/log/testWServer.log", "a+"); 	// TODO undo hardcoded. 	
+//	fwrite(buffer, 50, 1, access_log_file);	
 	
 	
 }

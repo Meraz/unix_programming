@@ -14,9 +14,6 @@
 #include <limits.h>
 #include <fcntl.h>
 
-// pthreads
-#include <pthread.h>
-
 // User defined
 #include "logger.h"
 
@@ -42,7 +39,7 @@ int sock;
 
 // Pre thingymagicks
 void start_server();
-void handle_request(int);
+void handle_request(int, char*);
 void read_config_file();
 void set_ws_root_directory();
 void parse_arguments();
@@ -164,9 +161,9 @@ void start_server()
 	}
 }
 
-void handle_request(int sock_current)
+void handle_request(int sock_current, char* loggable_adress)
 {
-	int reqlen, i, open_file, bytes_read;
+	int reqlen, i, open_file, bytes_read, file_size;
 	char *msg_buffer = malloc(BUFFSIZE);
 	char send_buffer[BUFFSIZE];
 	char *reqtype, *reqpath, *reqver;
@@ -176,7 +173,6 @@ void handle_request(int sock_current)
 	char callType[4] = "GET";	// TODO do not hardcode this
 
 	reqlen = recv(sock_current, msg_buffer, BUFFSIZE, 0);
-	accessLog(msg_buffer);
 	
 	if(reqlen == -1 || reqlen == 0)
 	{
@@ -233,13 +229,17 @@ printf("reqver:%s\n", reqver);
 					{
 						perror("send, 200");
 					}
+					struct stat stat_buf;
+					fstat(open_file, &stat_buf);
+					file_size = stat_buf.st_size;
+					//
+					accessLog(loggable_adress, file_size);
+					
 					// send datafile
 					while((bytes_read = read(open_file, send_buffer, BUFFSIZE)) > 0)
 					{
 						send(sock_current, send_buffer, bytes_read, 0);
-						// log. bytes_read can be accessed here. if one accumulates this for every send, this should be the correct size for the file
-						// if the c call fopen is used instead of the system call open one get backs an FD (filedescriptor, this has the size of the file)
-					}
+					}					
 				}
 				else
 				{
@@ -340,6 +340,7 @@ void wait_for_connection()
 	struct sigaction sa;
 	int addrlen;
 	pid_t pid;
+	char* adress_for_logging = malloc(sizeof(char) * 13);	// TODO, delete this maybe!
 	while(1)
 	{
 		addrlen = sizeof(client_address);
@@ -347,8 +348,8 @@ void wait_for_connection()
 		{
 			perror("accept");	// TODO should maybe specify more? error on accept or did accept work?
 		}
-		
-		printf("Request from %s\n", inet_ntoa(client_address.sin_addr));
+		adress_for_logging=inet_ntoa(client_address.sin_addr);
+		printf("Request from %s\n", adress_for_logging);
 
 		if((pid = fork()) < 0)						//
 		{
@@ -360,7 +361,7 @@ void wait_for_connection()
 			// This is the child process
 			//Close parent socket and handle the request
 			close(sock);
-			handle_request(sock_current);
+			handle_request(sock_current, adress_for_logging);
 			close(sock_current);
 			exit(0);
 		}

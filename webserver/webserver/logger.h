@@ -3,6 +3,6 @@
 
 //void openLogger();	// Might not need these two functions
 //void stopLogger();
-void accessLog(char* buffer);
+void accessLog(const char* adress, unsigned int size);
 
 #endif
