@@ -22,7 +22,7 @@
 #include "logger.h"
 
 #define BUFFSIZE 1024
-#define BACKLOG 20		// TODO eh?
+#define BACKLOG 20		// TODO eh? Used by listen();, limits the number of connections in queue
 #define CONFIG_FILE_BUFFER_SIZE 1024
 
 #ifndef MYDEBUG
@@ -55,7 +55,7 @@ char* listening_port;			// listening port
 
 /*
 typedef struct server			// If we might need to rethink this?
-{
+{								
 	time_t cur_ts;
 	
 } server;
@@ -64,7 +64,7 @@ typedef struct server			// If we might need to rethink this?
 int main(int argc, char* argv[])
 {
 	// Allocate stuff
-	ws_root_directory = malloc(PATH_MAX);	// TODO path_max, 
+	ws_root_directory = malloc(PATH_MAX);	// TODO path_max, PATH_MAX is from the realpath-lib. Since we are not using realpath we should maybe do something about this.
 	listening_port = malloc(5);				//
 
 	// Default values 
@@ -177,8 +177,8 @@ void handle_request(int sock_current)
 	char callType[4] = "GET";	// TODO do not hardcode this
 
 	reqlen = recv(sock_current, msg_buffer, BUFFSIZE, 0);
-	accessLog(msg_buffer);
-	
+	//accessLog(msg_buffer);
+
 	if(reqlen == -1 || reqlen == 0)
 	{
 		//LOG error
@@ -188,7 +188,6 @@ void handle_request(int sock_current)
 	{
 		reqtype = strtok(msg_buffer, " \t\n");
 		
-
 #ifdef MYDEBUG
 printf("\nreqtype:%s\n", reqtype);
 #endif
@@ -240,6 +239,7 @@ printf("reqver:%s\n", reqver);
 						// Why sendfile is better than send
 							// http://stackoverflow.com/questions/4129536/webserver-in-c-how-to-send-an-image/4129584#4129584
 						sendfile(sock_current, open_file, NULL, /*filesize*/244);		// TODO remove hardcoded filesize, this is done with stat.
+						printf("%s", "File sent!");
 					//	send(sock_current, send_buffer, bytes_read, 0);
 					}
 				}
