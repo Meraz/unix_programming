@@ -30,10 +30,11 @@
 #endif
 
 // TODO do something about this
-extern char request_ok[];
+extern char request_ok_header[];
 extern char bad_request[];
 extern char forbidden[];
 extern char not_found[];
+extern char not_found_header[];
 extern char internal_error[];
 extern char not_implemented[];
 
@@ -229,7 +230,7 @@ printf("reqver:%s\n", reqver);
 				if((open_file = open(path, O_RDONLY)) != -1)
 				{
 					// File found, return status message 200 
-					if(send(sock_current, request_ok, strlen(request_ok), 0) == -1)
+					if(send(sock_current, request_ok_header, strlen(request_ok_header), 0) == -1)
 					{
 						perror("send, 200");
 					}
@@ -255,7 +256,23 @@ printf("reqver:%s\n", reqver);
 		}
 		else if(strncmp(reqtype, "HEAD\0", 5) == 0 || strncmp(reqtype, "head\0", 5) == 0)		// Check if the call is of the HEAD type
 		{
-		
+			//Checking if the file exists
+			if((open_file = open(path, O_RDONLY)) != -1)
+			{
+				//File found, return 200
+				if(send(sock_current, request_ok_header, strlen(request_ok_header), 0) == -1)
+				{
+					perror("send, 200");
+				}
+			}
+			else
+			{
+				//File not found, return 404
+				if(send(sock_current, not_found_header, strlen(not_found_header), 0) == -1)
+				{
+					perror("send, 404");
+				}
+			}
 		}
 		else	// not GET or HEAD, return 501
 		{

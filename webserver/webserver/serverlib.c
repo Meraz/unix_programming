@@ -1,4 +1,7 @@
-char request_ok[] = "HTTP/1.0 200 OK\r\n"
+char request_ok_header[] = "HTTP/1.0 200 OK\r\n"
+"Content-Type: text/html; charset=UTF-8\r\n\r\n";
+
+char bad_request_header[] = "HTTP/1.0 400 Bad Request\r\n"
 "Content-Type: text/html; charset=UTF-8\r\n\r\n";
 
 char bad_request[] = "HTTP/1.0 400 Bad Request\r\n"
@@ -10,6 +13,9 @@ char forbidden[] = "HTTP/1.0 403 Forbidden\r\n"
 "Content-Type: text/html; charset=UTF-8\r\n\r\n"
 "<doctype !html><html><head><title>Forbidden</title></head>"
 "<body><h1>403 Forbidden</h1></body></html>\r\n";
+
+char not_found_header[] = "HTTP/1.0 404 Not Found\r\n"
+"Content-Type: text/html; charset=UTF-8\r\n\r\n";
 
 char not_found[] = "HTTP/1.0 404 Not Found\r\n"
 "Content-Type: text/html; charset=UTF-8\r\n\r\n"
