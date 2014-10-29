@@ -7,4 +7,4 @@ if ! [ -z "$id" ]; then
 	kill $id
 fi
 
-./wserver
+./wserver -p $1
