@@ -9,29 +9,38 @@
 #include<netinet/in.h>
 #include<sys/mman.h>
 
-void read_config_file(char *port, char *wsroot);
+#define MAX_QUEUE 20
+
+void read_config_file(int *port, char *wsroot);
 void set_ws_root_directory(char *path, char *wsroot);
-void parse_arguments(int argc, char **argv, char *port, int *daemon, char *log_file);
+void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_file);
+void start_server(int *port);
 
 int main(int argc, char* argv[])
 {
 	char ws_root_path[256];
 	char wsroot[32];
-	char port[6];
+	int port;
 	int daemon = 0;
 	char log_file[32] = "webserv.log";
 
 	//Read values from config
-	read_config_file(port, wsroot);
+	read_config_file(&port, wsroot);
 	//Setting root directory
 	set_ws_root_directory(ws_root_path, wsroot);
 	//Parsing arguments
-	parse_arguments(argc, argv, port, &daemon, log_file);
+	parse_arguments(argc, argv, &port, &daemon, log_file);
+
+	/* TODO Add chroot check
+	Add daemon */
+
+	//Start server
+	start_server(&port);
 
 	return 0;
 }
 
-void read_config_file(char *port, char *wsroot)
+void read_config_file(int *port, char *wsroot)
 {
 	FILE *config_file = fopen(".lab3-config", "r");
 	char *line = NULL;
@@ -53,7 +62,7 @@ void read_config_file(char *port, char *wsroot)
 
 		if(strncmp(line, "port", 4) == 0) //Store port number
 		{
-			sscanf(line, "%*s %s", port);
+			sscanf(line, "%*s %d", port);
 		}
 		else if(strncmp(line, "root", 4) == 0) //Store root-folder
 		{
@@ -82,7 +91,7 @@ void set_ws_root_directory(char *path, char *wsroot)
 	strcat(path, wsroot);				// Append root folder to the current directory 
 }
 
-void parse_arguments(int argc, char **argv, char *port, int *daemon, char *log_file)
+void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_file)
 {
 	int opt;
 	while((opt = getopt(argc, argv, "p:dl:")) != -1)
@@ -90,7 +99,7 @@ void parse_arguments(int argc, char **argv, char *port, int *daemon, char *log_f
 		switch(opt)
 		{
 			case 'p':
-				strcpy(port, optarg);
+				*port = atoi(optarg);
 				break;
 			case 'd':
 				*daemon = 1;
@@ -100,4 +109,22 @@ void parse_arguments(int argc, char **argv, char *port, int *daemon, char *log_f
 				break;
 		}
 	}
+}
+
+void start_server(int *port)
+{
+	struct sockaddr_in address;
+	int listener;
+	int opt = 1;
+
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons(*port);
+	
+	listener = socket(AF_INET, SOCK_STREAM, 0);
+	setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+	bind(listener, (struct sockaddr *) &address, sizeof(address));
+
+	listen(listener, MAX_QUEUE);
 }
