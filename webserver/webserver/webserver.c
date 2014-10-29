@@ -11,6 +11,7 @@
 
 void read_config_file(char *port, char *wsroot);
 void set_ws_root_directory(char *path, char *wsroot);
+void parse_arguments(int argc, char **argv, char *port, int *daemon, char *log_file);
 
 int main(int argc, char* argv[])
 {
@@ -18,11 +19,14 @@ int main(int argc, char* argv[])
 	char wsroot[32];
 	char port[6];
 	int daemon = 0;
+	char log_file[32] = "webserv.log";
 
 	//Read values from config
 	read_config_file(port, wsroot);
 	//Setting root directory
 	set_ws_root_directory(ws_root_path, wsroot);
+	//Parsing arguments
+	parse_arguments(argc, argv, port, &daemon, log_file);
 
 	return 0;
 }
@@ -76,4 +80,24 @@ void set_ws_root_directory(char *path, char *wsroot)
 	executing_directory = getenv("PWD");
 	strcpy(path, executing_directory);		// Set root directory to executing_directory
 	strcat(path, wsroot);				// Append root folder to the current directory 
+}
+
+void parse_arguments(int argc, char **argv, char *port, int *daemon, char *log_file)
+{
+	int opt;
+	while((opt = getopt(argc, argv, "p:dl:")) != -1)
+	{
+		switch(opt)
+		{
+			case 'p':
+				strcpy(port, optarg);
+				break;
+			case 'd':
+				*daemon = 1;
+				break;
+			case 'l':
+				strcpy(log_file, optarg);
+				break;
+		}
+	}
 }
