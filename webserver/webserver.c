@@ -8,8 +8,6 @@
 #include<netinet/in.h>
 #include<sys/mman.h>
 
-#include<errno.h>
-
 #define BUFSIZE 4096
 #define MAX_QUEUE 20
 
