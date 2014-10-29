@@ -1,2 +1,2 @@
-port=8080
-root=/wsroot
+port 8080
+root /wsroot
