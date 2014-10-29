@@ -1,0 +1,5 @@
+#Extensions supported by the server
+html text/html
+htm text/html
+shtml text/html
+png image/png
