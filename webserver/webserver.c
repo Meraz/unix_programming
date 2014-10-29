@@ -193,16 +193,17 @@ void handle_request(int new_socket)
 		goto closing_down;
 	}
 
+	//GET requests
 	if(strcmp(type, "GET") == 0)
 	{
-		//TODO REALPATH hates ALL teh paths! <3
-		/*resolved = realpath(uri, NULL);
-		printf("uri: %s REALPATH: %s\n", uri, resolved);*/
-		/*if(resolved == NULL)
+		//REALPATH hates ALL teh paths! <3
+		resolved = realpath(uri, NULL);
+		if(resolved == NULL)
 		{
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
 			send(new_socket, buffer, strlen(buffer), 0);
-		}*/
+			goto closing_down;
+		}
 		
 		//Check if the requested file exists
 		if((openfile = open(uri, O_RDONLY)) != -1)
@@ -219,13 +220,22 @@ void handle_request(int new_socket)
 			send(new_socket, buffer, strlen(buffer), 0);
 		}		
 	}
+	//HEAD requests
 	else if(strcmp(type, "HEAD") == 0)
 	{
-		/*//Checking if the file exists
+		resolved = realpath(uri, NULL);
+		if(resolved == NULL)
+		{
+			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
+			send(new_socket, buffer, strlen(buffer), 0);
+			goto closing_down;
+		}
+		
+		//Checking if the file exists
 		if((openfile = open(uri, O_RDONLY)) != -1)
 		{
 			//File found, return 200
-			strcpy(buffer, "HTTP/1.0 200 OK\r\n\r\n");
+			strcpy(buffer, "HTTP/1.0 200 OK\r\n");
 			send(new_socket, buffer, strlen(buffer), 0);
 		}
 		else
@@ -233,8 +243,9 @@ void handle_request(int new_socket)
 			//File not found, return 404
 			strcpy(buffer,"HTTP/1.0 404 Not Found\r\n");
 			send(new_socket, buffer, strlen(buffer), 0);
-		}*/
+		}
 	}
+	//Not implemented requests
 	else
 	{
 		strcpy(buffer, "HTTP/1.0 501 Not Implemented\r\n");
@@ -247,6 +258,7 @@ void handle_request(int new_socket)
 
 char *resolve_path(char *uri)
 {
+	printf("PATH: %s\n", uri);
 	if(strncmp(uri, "/\0", 2) == 0)
 	{
 		return "index.html";
