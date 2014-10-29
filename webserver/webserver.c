@@ -17,6 +17,7 @@ void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_fi
 void start_server(struct sockaddr_in address, int *port, int *listener);
 void wait_for_connection(struct sockaddr_in address, int *listener);
 void handle_request(int new_socket);
+char *resolve_path(char *uri);
 
 int main(int argc, char* argv[])
 {
@@ -35,8 +36,7 @@ int main(int argc, char* argv[])
 	parse_arguments(argc, argv, &port, &daemon, log_file);
 	
 	//Set current dir
-	//TODO, fix this + 1 crap...
-	chdir(wsroot + 1);
+	chdir(resolve_path(wsroot));
 	//TODO Set chroot...
 
 	// TODO Add daemon stuff
@@ -80,7 +80,7 @@ void read_config_file(int *port, char *wsroot)
 			sscanf(line, "%*s %s", wsroot);
 		}
 	}
-	
+
 	fclose(config_file);
 	if(line)
 	{
@@ -92,9 +92,9 @@ void check_ws_root(char *wsroot)
 {
 	char *executing_directory;
 	struct stat l_stat = {0};
-	if (stat(wsroot + 1, &l_stat) == -1) // if the folder does not exist, create it
+	if (stat(resolve_path(wsroot), &l_stat) == -1) // if the folder does not exist, create it
 	{
-		mkdir(wsroot + 1, 0700);
+		mkdir(resolve_path(wsroot), 0700);
 	}
 }
 
@@ -155,7 +155,6 @@ void wait_for_connection(struct sockaddr_in address, int *listener)
 			//Close parent socket and handle the request
 			close(*listener);
 			handle_request(new_socket);
-			close(new_socket);
 			exit(0);
 		}
 		else
@@ -173,6 +172,7 @@ void handle_request(int new_socket)
 {
 	char buffer[BUFSIZE];
 	char *temp = NULL;
+	char *type = NULL;
 	char *uri = NULL;
 	char *httpv = NULL;
 	char *resolved = NULL;
@@ -180,20 +180,21 @@ void handle_request(int new_socket)
 
 	recv(new_socket, buffer, BUFSIZE, 0);
 
-	if(strncmp(buffer, "GET", 3) == 0)
-	{
-		temp = buffer;
-		uri = strsep(&temp, " \r\n"); //First part is "GET", we want the path
-		uri = strsep(&temp, " \r\n"); //Path
-		httpv = strsep(&temp, " \r\n"); //HTTP version
+	temp = buffer;
+	type = strsep(&temp, " \r\n"); //Type of request, GET or HEAD are supported
+	uri = resolve_path(strsep(&temp, " \r\n")); //Path
+	httpv = strsep(&temp, " \r\n"); //HTTP version
 
-		//If it is not HTTP/1.0 or HTTP/1.1, send Bad Request
-		if ((strcmp(httpv, "HTTP/1.0") != 0 && strcmp(httpv, "HTTP/1.1") != 0))
-		{
-			strcpy(buffer, "HTTP/1.0 400 Bad Request\r\n");
-			send(new_socket, buffer, strlen(buffer), 0);
-		}
-		
+	//If it is not HTTP/1.0 or HTTP/1.1, send Bad Request
+	if ((strcmp(httpv, "HTTP/1.0") != 0 && strcmp(httpv, "HTTP/1.1") != 0))
+	{
+		strcpy(buffer, "HTTP/1.0 400 Bad Request\r\n");
+		send(new_socket, buffer, strlen(buffer), 0);
+		goto closing_down;
+	}
+
+	if(strcmp(type, "GET") == 0)
+	{
 		//TODO REALPATH hates ALL teh paths! <3
 		/*resolved = realpath(uri, NULL);
 		printf("uri: %s REALPATH: %s\n", uri, resolved);*/
@@ -202,16 +203,11 @@ void handle_request(int new_socket)
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
 			send(new_socket, buffer, strlen(buffer), 0);
 		}*/
-
-		if(strcmp(uri, "/") == 0)
-		{
-			uri = "index.html";
-		}
 		
 		//Check if the requested file exists
-		//It does, 200
 		if((openfile = open(uri, O_RDONLY)) != -1)
 		{
+			//It does, 200
 			strcpy(buffer, "HTTP/1.0 200 OK\r\n\r\n");
 			send(new_socket, buffer, strlen(buffer), 0);
 			sendfile(new_socket, openfile, NULL, /*filesize*/244);
@@ -223,13 +219,40 @@ void handle_request(int new_socket)
 			send(new_socket, buffer, strlen(buffer), 0);
 		}		
 	}
-	else if(strncmp(buffer, "HEAD", 4) == 0)
+	else if(strcmp(type, "HEAD") == 0)
 	{
-		printf("HEAD request...\n");
+		/*//Checking if the file exists
+		if((openfile = open(uri, O_RDONLY)) != -1)
+		{
+			//File found, return 200
+			strcpy(buffer, "HTTP/1.0 200 OK\r\n\r\n");
+			send(new_socket, buffer, strlen(buffer), 0);
+		}
+		else
+		{
+			//File not found, return 404
+			strcpy(buffer,"HTTP/1.0 404 Not Found\r\n");
+			send(new_socket, buffer, strlen(buffer), 0);
+		}*/
 	}
 	else
 	{
 		strcpy(buffer, "HTTP/1.0 501 Not Implemented\r\n");
 		send(new_socket,buffer,strlen(buffer),0);
+	}
+	closing_down:
+	close(openfile);
+	close(new_socket);
+}
+
+char *resolve_path(char *uri)
+{
+	if(strncmp(uri, "/\0", 2) == 0)
+	{
+		return "index.html";
+	}
+	else if(strncmp(uri, "/", 1) == 0)
+	{
+		return uri + 1;
 	}
 }
