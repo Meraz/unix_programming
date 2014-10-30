@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
+#include <syslog.h>
 
 
 void read_config_file(int *port, char *wsroot);
@@ -24,3 +24,4 @@ char *resolve_path(char *uri);
 void create_ok_header(char *uri, char *buffer);
 char *get_extension(char *path);
 void *get_content_type(char *extension, char *content_type);
+void write_syslog(char *msg);

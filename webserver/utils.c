@@ -105,6 +105,15 @@ void write_log(char *file_name, int sockfd, char *ident, char *auth, char *reque
 	fflush(file);	
 }
 
+void write_syslog(char *msg)
+{
+	if(strlen(msg) > 64) 
+	{
+		return;
+	}
+	syslog(LOG_ERR, "%s", msg);
+}
+
 void daemonize()
 {
 	//http://stackoverflow.com/questions/17954432/creating-a-daemon-in-linux

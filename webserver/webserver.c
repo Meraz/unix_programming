@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
 	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
 	//Open supported.extensions file for later use
 	get_content_type(NULL, NULL);
+	// Open sys log!
+//	openlog("woeiuggrniogigrwwg", LOG_PID | LOG_CONS, LOG_USER);
 	//Set current dir and root it
 	chdir(wsroot);
 	if(chroot(wsroot) != 0)
@@ -37,6 +39,8 @@ int main(int argc, char* argv[])
 	}
 	setuid(1000);
 	//If daemon flag is set, run as daemon
+syslog(LOG_USER|LOG_DEBUG, "%d variable %s\n", 2, "arguments");
+
 	if(daemon)
 	{
 		daemonize();
@@ -50,6 +54,8 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
+
+
 
 void start_server(struct sockaddr_in address, int *port, int *listener)
 {
