@@ -72,7 +72,7 @@ void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_fi
 	}
 }
 
-void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request_type, char *request_file, int status, int bytes) 
+void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request, int status, int bytes) 
 {
 	static FILE *file = NULL;
 	if(file == NULL) 
@@ -101,7 +101,7 @@ void write_log(char *file_name, int sockfd, char *ident, char *auth, char *reque
 	
 	//Writing data to file
 	strftime(now, 32, "%d/%b/%Y:%T %z", brokentime);
-	fprintf(file, "%s %s %s [%s] \"%s %s\" %d %d \n", buf, ident, auth, now, request_type, request_file, status, bytes);
+	fprintf(file, "%s %s %s [%s] \"%s\" %d %d \n", buf, ident, auth, now, request, status, bytes);
 	fflush(file);	
 }
 

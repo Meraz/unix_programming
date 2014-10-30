@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	//Parsing arguments
 	parse_arguments(argc, argv, &port, &daemon, log_file);
 	//Open/create file for logging
-	write_log(log_file, 0, NULL, NULL, NULL, NULL, 0, 0); 
+	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
 	//Set current dir and root it
 	chdir(wsroot);
 	//TODO This SHOULD work...
@@ -101,7 +101,9 @@ void wait_for_connection(struct sockaddr_in address, int *listener)
 void handle_request(int new_socket)
 {
 	char buffer[BUFSIZE];
-	char *temp = NULL;
+	char *temp = malloc(BUFSIZE);
+	char *temp2 = malloc(BUFSIZE);
+	char *logger_line = NULL;
 	char *type = NULL;
 	char *uri = NULL;
 	char *httpv = NULL;
@@ -111,17 +113,20 @@ void handle_request(int new_socket)
 
 	recv(new_socket, buffer, BUFSIZE, 0);
 
-	temp = buffer;
-	type = strsep(&temp, " \r\n"); //Type of request, GET or HEAD are supported
-	uri = resolve_path(strsep(&temp, " \r\n")); //Path
-	httpv = strsep(&temp, " \r\n"); //HTTP version
+	strcpy(temp, buffer);
+	type = strtok(temp, " "); //Type of request, GET or HEAD are supported
+	uri = resolve_path(strtok(NULL, " ")); //Path
+	httpv = strtok(NULL, "\r"); //HTTP version
+
+	strcpy(temp2, buffer);
+	logger_line = strtok(temp2, "\r");
 
 	//If it is not HTTP/1.0 or HTTP/1.1, 400
 	if ((strcmp(httpv, "HTTP/1.0") != 0 && strcmp(httpv, "HTTP/1.1") != 0))
 	{
 		strcpy(buffer, "HTTP/1.0 400 Bad Request\r\n");
 		bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-		write_log(NULL, new_socket, "-", "-", "GET", "Bad Request", 400, bytes_sent);
+		write_log(NULL, new_socket, "-", "-", logger_line, 400, bytes_sent);
 		goto closing_down;
 	}
 
@@ -131,7 +136,7 @@ void handle_request(int new_socket)
 		//File does not exist, 404
 		strcpy(buffer, "HTTP/1.0 404 Not Found\r\n");
 		bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-		write_log(NULL, new_socket, "-", "-", "GET ", uri, 404, bytes_sent);
+		write_log(NULL, new_socket, "-", "-", logger_line, 404, bytes_sent);
 		goto closing_down;
 	}
 
@@ -149,11 +154,11 @@ void handle_request(int new_socket)
 				//Error sending file, 500
 				strcpy(buffer,"HTTP/1.0 500 Internal Server Error\r\n");
 				bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-				write_log(NULL, new_socket, "-", "-", "GET ", uri, 500, bytes_sent);
+				write_log(NULL, new_socket, "-", "-", logger_line, 500, bytes_sent);
 			}
 			else
 			{
-				write_log(NULL, new_socket, "-", "-", "GET ", uri, 200, bytes_sent);
+				write_log(NULL, new_socket, "-", "-", logger_line, 200, bytes_sent);
 			}
 		}
 		else
@@ -161,7 +166,7 @@ void handle_request(int new_socket)
 			//Can't open file, 403
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
 			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-			write_log(NULL, new_socket, "-", "-", "GET ", uri, 403, bytes_sent);
+			write_log(NULL, new_socket, "-", "-", logger_line, 403, bytes_sent);
 		}		
 	}
 	//HEAD requests
@@ -173,14 +178,14 @@ void handle_request(int new_socket)
 			//File opens, 200
 			create_ok_header(uri, buffer);
 			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 200, bytes_sent);
+			write_log(NULL, new_socket, "-", "-", logger_line, 200, bytes_sent);
 		}
 		else
 		{
 			//Can't open file, 403
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
 			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 403, bytes_sent);
+			write_log(NULL, new_socket, "-", "-", logger_line, 403, bytes_sent);
 		}
 	}
 	//All other requests
@@ -188,11 +193,14 @@ void handle_request(int new_socket)
 	{
 		//Not implemented, 501
 		strcpy(buffer, "HTTP/1.0 501 Not Implemented\r\n");
-		bytes_sent = send(new_socket,buffer,strlen(buffer),0);
-		write_log(NULL, new_socket, "-", "-", "Invalid ", uri, 501, bytes_sent);
+		bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+		write_log(NULL, new_socket, "-", "-", logger_line, 501, bytes_sent);
 	}
+
 	closing_down:
 	free(rp);
+	free(temp);
+	free(temp2);
 	close(openfile);
 	close(new_socket);
 }

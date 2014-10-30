@@ -14,7 +14,7 @@
 void read_config_file(int *port, char *wsroot);
 char *get_full_path(char *folder);
 void check_ws_root(char *wsroot);
-void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request_type, char *request_file, int status, int bytes);
+void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request, int status, int bytes);
 void daemonize();
 char *resolve_path(char *uri);
 void create_ok_header(char *uri, char *buffer);
