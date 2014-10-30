@@ -7,6 +7,7 @@
 #include<sys/socket.h>
 #include<netinet/in.h>
 #include<sys/mman.h>
+#include<time.h>
 
 #define BUFSIZE 4096
 #define MAX_QUEUE 20
@@ -27,6 +28,7 @@ char *resolve_path(char *uri);
 void create_ok_header(char *uri, char *buffer);
 char *get_extension(char *path);
 void *get_content_type(char *extension, char *content_type);
+void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request_type, char *request_file, int status, int bytes);
 
 int main(int argc, char* argv[])
 {
@@ -43,7 +45,8 @@ int main(int argc, char* argv[])
 	check_ws_root(wsroot);
 	//Parsing arguments
 	parse_arguments(argc, argv, &port, &daemon, log_file);
-	
+	//Open/create file for logging
+	write_log(log_file, 0, NULL, NULL, NULL, NULL, 0, 0); 
 	//Set current dir
 	chdir(resolve_path(wsroot));
 	//TODO Set chroot...
@@ -183,7 +186,7 @@ void handle_request(int new_socket)
 	char *type = NULL;
 	char *uri = NULL;
 	char *httpv = NULL;
-	char *resolved = NULL;
+	char *rp = NULL;
 	int openfile;
 
 	recv(new_socket, buffer, BUFSIZE, 0);
@@ -198,15 +201,17 @@ void handle_request(int new_socket)
 	{
 		strcpy(buffer, "HTTP/1.0 400 Bad Request\r\n");
 		send(new_socket, buffer, strlen(buffer), 0);
+		write_log(NULL, new_socket, "-", "-", "GET", "Bad Request", 400, 0);
 		goto closing_down;
 	}
 
-	resolved = realpath(uri, NULL);
-	if(resolved == NULL)
+	rp = realpath(uri, NULL);
+	if(rp == NULL)
 	{
 		//File does not exist, 404
 		strcpy(buffer, "HTTP/1.0 404 Not Found\r\n");
 		send(new_socket, buffer, strlen(buffer), 0);
+		write_log(NULL, new_socket, "-", "-", "GET ", rp, 404, 0);
 		goto closing_down;
 	}
 
@@ -224,6 +229,11 @@ void handle_request(int new_socket)
 				//Error sending file, 500
 				strcpy(buffer,"HTTP/1.0 500 Internal Server Error\r\n");
 				send(new_socket, buffer, strlen(buffer), 0);
+				write_log(NULL, new_socket, "-", "-", "GET ", uri, 500, 0);
+			}
+			else
+			{
+				write_log(NULL, new_socket, "-", "-", "GET ", uri, 200, 0);
 			}
 		}
 		else
@@ -231,6 +241,7 @@ void handle_request(int new_socket)
 			//Can't open file, 403
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
 			send(new_socket, buffer, strlen(buffer), 0);
+			write_log(NULL, new_socket, "-", "-", "GET ", uri, 403, 0);
 		}		
 	}
 	//HEAD requests
@@ -242,12 +253,14 @@ void handle_request(int new_socket)
 			//File opens, 200
 			create_ok_header(uri, buffer);
 			send(new_socket, buffer, strlen(buffer), 0);
+			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 200, 0);
 		}
 		else
 		{
 			//Can't open file, 403
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
 			send(new_socket, buffer, strlen(buffer), 0);
+			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 403, 0);
 		}
 	}
 	//All other requests
@@ -256,9 +269,10 @@ void handle_request(int new_socket)
 		//Not implemented, 501
 		strcpy(buffer, "HTTP/1.0 501 Not Implemented\r\n");
 		send(new_socket,buffer,strlen(buffer),0);
+		write_log(NULL, new_socket, "-", "-", "Invalid ", uri, 501, 0);
 	}
 	closing_down:
-	free(resolved);
+	free(rp);
 	close(openfile);
 	close(new_socket);
 }
@@ -281,6 +295,7 @@ void create_ok_header(char *uri, char *buffer)
 	char *file_extension;
 	file_extension = get_extension(uri);
 	get_content_type(file_extension, content_type);
+	//TODO Fix error where the below code does some magic to URI...
 	strcpy(buffer,"HTTP/1.0 200 OK\r\nContent-Type: ");
 	strcat(buffer, content_type);
 	strcat(buffer, "\r\n\r\n");
@@ -328,4 +343,37 @@ void *get_content_type(char *extension, char *content_type)
 	{
 		free(line);
 	}
+}
+
+void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request_type, char *request_file, int status, int bytes) 
+{
+	static FILE *file = NULL;
+	if(file == NULL) 
+	{
+		file = fopen(file_name, "a+");
+	} 
+
+	if(sockfd == 0) 
+	{
+		return;
+	}
+	
+	struct sockaddr_in client;
+	int c_len = sizeof(client);
+	char buf[80];	
+
+	//Getting time stamp
+	time_t result;
+	result = time(NULL);
+	struct tm* brokentime = localtime(&result);
+	char now[32];
+
+	getpeername(sockfd, (struct sockaddr*)&client, &c_len);
+	
+	inet_ntop(AF_INET, (struct sockaddr*)&client.sin_addr, buf, sizeof(buf));
+	
+	//Writing data to file
+	strftime(now, 32, "%d/%b/%Y:%T %z", brokentime);
+	fprintf(file, "%s %s %s [%s] \"%s %s\" %d %d \n", buf, ident, auth, now, request_type, request_file, status, bytes);
+	fflush(file);	
 }
