@@ -15,7 +15,6 @@ int main(int argc, char* argv[])
 	int daemon = 0;
 	char* log_file = NULL;
 	int listener;
-	char *extension = NULL;
 	
 	openlog ("wserver", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
 	
@@ -31,7 +30,6 @@ int main(int argc, char* argv[])
 	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
 	//Open supported.extensions file for later use
 	get_content_type(NULL, NULL);
-	get_content_type(extension, NULL);
 	//Set current dir and root it
 	chdir(wsroot);
 	if(chroot(wsroot) != 0)
