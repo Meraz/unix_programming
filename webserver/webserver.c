@@ -30,13 +30,12 @@ int main(int argc, char* argv[])
 	get_content_type(NULL, NULL);
 	//Set current dir and root it
 	chdir(wsroot);
-	//TODO This SHOULD work...
-	/*if(chroot("/home/ironman/gitrepos/unix_programming/webserver/wsroot") != 0)
+	if(chroot(wsroot) != 0)
 	{
 		perror("chroot");
 		exit(1);
 	}
-	setuid(1000);*/
+	setuid(1000);
 	//If daemon flag is set, run as daemon
 	if(daemon)
 	{
