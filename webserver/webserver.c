@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
 	int daemon = 0;
 	char log_file[32] = "webserv.log";
 	int listener;
+	char *extension = NULL;
 
 	//Read values from config
 	read_config_file(&port, wsroot_folder);
@@ -27,7 +28,7 @@ int main(int argc, char* argv[])
 	//Open/create file for logging
 	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
 	//Open supported.extensions file for later use
-	get_content_type(NULL, NULL);
+	get_content_type(extension, NULL);
 	//Set current dir and root it
 	chdir(wsroot);
 	if(chroot(wsroot) != 0)
