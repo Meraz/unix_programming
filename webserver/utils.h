@@ -24,5 +24,4 @@ void daemonize();
 char *resolve_path(char *uri);
 void create_ok_header(char *uri, char *buffer);
 char *get_extension(char *path);
-void write_syslog(char *msg);
 void get_content_type(char *extension, char *content_type);

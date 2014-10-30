@@ -37,7 +37,6 @@ int main(int argc, char* argv[])
 	if(chroot(wsroot) != 0)
 	{
 		perror("chroot");
-		write_syslog("Error when chrooting. Exiting");
 		exit(1);
 	}
 	setuid(1000);
@@ -56,8 +55,6 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
-
 
 void start_server(struct sockaddr_in address, int *port, int *listener)
 {
