@@ -37,20 +37,16 @@ done
 if [ ! $pFlag -eq 0 ] ; 
 	then
 	out="$out -p $pFlag"
-	echo $out;
 fi
-
 
 if [ ! -z "$lFlag"  ] ; 
 	then
 	out="$out -l $lFlag"
-	echo $out;
 fi
 
 if [ ! $dFlag -eq 0 ] ; 
 	then
 	out="$out -d"
-	echo $out;
 fi
 
 id=`ps aux | grep wserver | grep -v grep | cut -d " "  -f4`
@@ -60,5 +56,5 @@ if ! [ -z "$id" ]; then
 	kill $id
 fi
 
-#echo $out
+echo $out
 `$out`
