@@ -1,15 +1,19 @@
 /* This file contains functions supporting the web server. */
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<fcntl.h>
-#include<syslog.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include<netinet/in.h>
-#include<sys/mman.h>
-#include<time.h>
-#include<signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/mman.h>
+#include <time.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+
 
 void read_config_file(int *port, char *wsroot);
 char *get_full_path(char *folder);
