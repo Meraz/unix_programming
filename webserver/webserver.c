@@ -298,6 +298,7 @@ char *get_extension(char *path)
 
 void *get_content_type(char *extension, char *content_type)
 {
+	//TODO Path to file might be screwed up when chroot works...
 	FILE *extension_file = fopen("../supported.extensions", "r");
 	char *line = NULL;
 	size_t len = 0;
