@@ -73,7 +73,7 @@ void parse_arguments(int argc, char **argv, int *port, int *daemon, char **log_f
 	}
 }
 
-void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request, int status, int bytes) 
+int write_log(char *file_name, int sockfd, char *ident, char *auth, char *request, int status, int bytes) 
 {
 	static FILE *file = NULL;
 	if(file == NULL) 
@@ -81,6 +81,7 @@ void write_log(char *file_name, int sockfd, char *ident, char *auth, char *reque
 		if(file_name != NULL)
 		{
 			file = fopen(file_name, "a+");
+			return fileno(file);
 		}
 	} 
 
@@ -116,10 +117,12 @@ void write_log(char *file_name, int sockfd, char *ident, char *auth, char *reque
 	}	
 }
 
-void daemonize()
+void daemonize(int lfp, int efp)
 {
-	//http://stackoverflow.com/questions/17954432/creating-a-daemon-in-linux
 	pid_t pid;
+
+	//Set file permissions for daemon
+    umask(0);
 
     //Fork off the parent process
     if((pid = fork()) < 0)
@@ -145,15 +148,21 @@ void daemonize()
 		exit(0);
 	}
 
-	//Set file permissions for daemon
-    umask(0);
-
 	//Close all open file descriptors
     int x;
     for (x = sysconf(_SC_OPEN_MAX); x>0; x--)
     {
-        close (x);
+    	if(x == lfp || x == efp)
+    	{
+    		printf("Skipping %d\n", x);
+    	}
+    	else
+    	{
+    		close(x);
+    	}
     }
+
+    openlog("Deamon", LOG_CONS, LOG_DAEMON);
 }
 
 char *resolve_path(char *uri)
@@ -189,7 +198,7 @@ char *get_extension(char *path)
     return dot + 1;
 }
 
-void get_content_type(char *extension, char *content_type)
+int get_content_type(char *extension, char *content_type)
 {
 	static FILE *extension_file;
 	char *line = NULL;
@@ -199,6 +208,7 @@ void get_content_type(char *extension, char *content_type)
 	if(extension == NULL)
 	{
 		extension_file = fopen("supported.extensions", "r");
+		return fileno(extension_file);
 	}
 	else
 	{

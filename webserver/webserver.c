@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
 	int daemon = 0;
 	char* log_file = NULL;
 	int listener;
+	int lfp, efp;
 	
 	openlog ("wserver", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
 	
@@ -27,9 +28,9 @@ int main(int argc, char* argv[])
 	//Parsing arguments
 	parse_arguments(argc, argv, &port, &daemon, &log_file);
 	//Open/create file for logging
-	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
+	lfp = write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
 	//Open supported.extensions file for later use
-	get_content_type(NULL, NULL);
+	efp = get_content_type(NULL, NULL);
 	//Set current dir and root it
 	chdir(wsroot);
 	if(chroot(wsroot) != 0)
@@ -39,10 +40,9 @@ int main(int argc, char* argv[])
 	}
 	setuid(1000);
 	//If daemon flag is set, run as daemon
-
 	if(daemon)
 	{
-		daemonize();
+		daemonize(lfp, efp);
 	}
 	//Start server
 	start_server(address, &port, &listener);
