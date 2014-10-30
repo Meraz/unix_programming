@@ -1,5 +1,5 @@
 #! /bin/bash
 clear
-gcc webserver.c -o wserver
+gcc webserver.c utils.c -o wserver
 
 

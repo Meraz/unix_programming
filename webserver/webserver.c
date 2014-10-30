@@ -1,28 +1,11 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<fcntl.h>
-#include<syslog.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include<netinet/in.h>
-#include<sys/mman.h>
-#include<time.h>
+#include "utils.h"
 
 #define BUFSIZE 4096
 #define MAX_QUEUE 20
 
-void read_config_file(int *port, char *wsroot);
-void check_ws_root(char *wsroot);
-void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_file);
 void start_server(struct sockaddr_in address, int *port, int *listener);
 void wait_for_connection(struct sockaddr_in address, int *listener);
 void handle_request(int new_socket);
-char *resolve_path(char *uri);
-void create_ok_header(char *uri, char *buffer);
-char *get_extension(char *path);
-void *get_content_type(char *extension, char *content_type);
-void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request_type, char *request_file, int status, int bytes);
 
 int main(int argc, char* argv[])
 {
@@ -45,8 +28,11 @@ int main(int argc, char* argv[])
 	chdir(resolve_path(wsroot));
 	//TODO Set chroot...
 
-	// TODO Add daemon stuff
-
+	//If daemon flag is set, run as daemon
+	if(daemon)
+	{
+		daemonize();
+	}
 	//Start server
 	start_server(address, &port, &listener);
 	//Wait for connections
@@ -55,72 +41,6 @@ int main(int argc, char* argv[])
 	close(listener);
 
 	return 0;
-}
-
-void read_config_file(int *port, char *wsroot)
-{
-	FILE *config_file = fopen(".lab3-config", "r");
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t read;
-
-	if(config_file == NULL)
-	{
-		exit(1);
-	}
-
-	while((read = getline(&line, &len, config_file)) != -1)
-	{
-		if(line[0] == '#')
-		{
-			continue;
-		}
-
-		if(strncmp(line, "port", 4) == 0) //Store port number
-		{
-			sscanf(line, "%*s %d", port);
-		}
-		else if(strncmp(line, "root", 4) == 0) //Store root-folder
-		{
-			sscanf(line, "%*s %s", wsroot);
-		}
-	}
-
-	fclose(config_file);
-	if(line)
-	{
-		free(line);
-	}
-}
-
-void check_ws_root(char *wsroot)
-{
-	char *executing_directory;
-	struct stat l_stat = {0};
-	if (stat(resolve_path(wsroot), &l_stat) == -1) // if the folder does not exist, create it
-	{
-		mkdir(resolve_path(wsroot), 0700);
-	}
-}
-
-void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_file)
-{
-	int opt;
-	while((opt = getopt(argc, argv, "p:dl:")) != -1)
-	{
-		switch(opt)
-		{
-			case 'p':
-				*port = atoi(optarg);
-				break;
-			case 'd':
-				*daemon = 1;
-				break;
-			case 'l':
-				strcpy(log_file, optarg);
-				break;
-		}
-	}
 }
 
 void start_server(struct sockaddr_in address, int *port, int *listener)
@@ -166,7 +86,6 @@ void wait_for_connection(struct sockaddr_in address, int *listener)
 		{
 			// This is the parent process
 			// Kill child process and close child socket
-			//TODO Don't wait, just keep accepting new connections.
 			wait(NULL);
 			close(new_socket);
 		}
@@ -269,106 +188,4 @@ void handle_request(int new_socket)
 	free(rp);
 	close(openfile);
 	close(new_socket);
-}
-
-char *resolve_path(char *uri)
-{
-	if(strncmp(uri, "/\0", 2) == 0)
-	{
-		return "index.html";
-	}
-	else if(strncmp(uri, "/", 1) == 0)
-	{
-		return uri + 1;
-	}
-}
-
-void create_ok_header(char *uri, char *buffer)
-{
-	char content_type[32];
-	char *file_extension;
-	file_extension = get_extension(uri);
-	get_content_type(file_extension, content_type);
-	//TODO Fix error where the below code does some magic to URI...
-	strcpy(buffer,"HTTP/1.0 200 OK\r\nContent-Type: ");
-	strcat(buffer, content_type);
-	//TODO Add Content-Length?
-	strcat(buffer, "\r\n\r\n");
-}
-
-char *get_extension(char *path)
-{
-	char *dot = strrchr(path, '.');
-    if(!dot || dot == path)
-	{
-		return "";
-	}
-    return dot + 1;
-}
-
-void *get_content_type(char *extension, char *content_type)
-{
-	//TODO Path to file might be screwed up when chroot works...
-	FILE *extension_file = fopen("../supported.extensions", "r");
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t read;
-
-	if(extension_file == NULL)
-	{
-		exit(1);
-	}
-
-	while((read = getline(&line, &len, extension_file)) != -1)
-	{
-		if(line[0] == '#')
-		{
-			continue;
-		}
-
-		if(strncmp(line, extension, strlen(extension)) == 0) //Extension found
-		{
-			sscanf(line, "%*s %s", content_type); //Get content-type
-			break;
-		}
-	}
-
-	fclose(extension_file);
-	if(line)
-	{
-		free(line);
-	}
-}
-
-void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request_type, char *request_file, int status, int bytes) 
-{
-	static FILE *file = NULL;
-	if(file == NULL) 
-	{
-		file = fopen(file_name, "a+");
-	} 
-
-	if(sockfd == 0) 
-	{
-		return;
-	}
-	
-	struct sockaddr_in client;
-	int c_len = sizeof(client);
-	char buf[80];	
-
-	//Getting time stamp
-	time_t result;
-	result = time(NULL);
-	struct tm* brokentime = localtime(&result);
-	char now[32];
-
-	getpeername(sockfd, (struct sockaddr*)&client, &c_len);
-	
-	inet_ntop(AF_INET, (struct sockaddr*)&client.sin_addr, buf, sizeof(buf));
-	
-	//Writing data to file
-	strftime(now, 32, "%d/%b/%Y:%T %z", brokentime);
-	fprintf(file, "%s %s %s [%s] \"%s %s\" %d %d \n", buf, ident, auth, now, request_type, request_file, status, bytes);
-	fflush(file);	
 }
