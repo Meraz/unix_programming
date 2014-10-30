@@ -16,6 +16,10 @@ int main(int argc, char* argv[])
 	char log_file[32] = "webserv.log";
 	int listener;
 	char *extension = NULL;
+	
+	// Open sys log
+	openlog ("wserver", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+	write_syslog("Starting up");
 
 	//Read values from config
 	read_config_file(&port, wsroot_folder);
@@ -29,19 +33,17 @@ int main(int argc, char* argv[])
 	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
 	//Open supported.extensions file for later use
 	get_content_type(NULL, NULL);
-	// Open sys log!
-//	openlog("woeiuggrniogigrwwg", LOG_PID | LOG_CONS, LOG_USER);
 	get_content_type(extension, NULL);
 	//Set current dir and root it
 	chdir(wsroot);
 	if(chroot(wsroot) != 0)
 	{
 		perror("chroot");
+		write_syslog("Error when chrooting. Exiting");
 		exit(1);
 	}
 	setuid(1000);
 	//If daemon flag is set, run as daemon
-syslog(LOG_USER|LOG_DEBUG, "%d variable %s\n", 2, "arguments");
 
 	if(daemon)
 	{
