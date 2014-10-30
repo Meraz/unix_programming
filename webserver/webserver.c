@@ -26,11 +26,14 @@ int main(int argc, char* argv[])
 	parse_arguments(argc, argv, &port, &daemon, log_file);
 	//Open/create file for logging
 	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
+	//Open supported.extensions file for later use
+	get_content_type(NULL, NULL);
 	//Set current dir and root it
 	chdir(wsroot);
 	//TODO This SHOULD work...
 	/*if(chroot("/home/ironman/gitrepos/unix_programming/webserver/wsroot") != 0)
 	{
+		perror("chroot");
 		exit(1);
 	}
 	setuid(1000);*/

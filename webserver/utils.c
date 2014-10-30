@@ -163,10 +163,8 @@ void create_ok_header(char *uri, char *buffer)
 	char *file_extension;
 	file_extension = get_extension(uri);
 	get_content_type(file_extension, content_type);
-	//TODO Fix error where the below code does some magic to URI...
 	strcpy(buffer,"HTTP/1.0 200 OK\r\nContent-Type: ");
 	strcat(buffer, content_type);
-	//TODO Add Content-Length?
 	strcat(buffer, "\r\n\r\n");
 }
 
@@ -182,34 +180,35 @@ char *get_extension(char *path)
 
 void *get_content_type(char *extension, char *content_type)
 {
-	//TODO Path to file might be screwed up when chroot works...
-	FILE *extension_file = fopen("../supported.extensions", "r");
+	static FILE *extension_file = NULL;
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
 
 	if(extension_file == NULL)
 	{
-		exit(1);
-	}
+		extension_file = fopen("supported.extensions", "r");
 
-	while((read = getline(&line, &len, extension_file)) != -1)
-	{
-		if(line[0] == '#')
+		if(extension != NULL)
 		{
-			continue;
-		}
+			while((read = getline(&line, &len, extension_file)) != -1)
+			{
+				if(line[0] == '#')
+				{
+					continue;
+				}
 
-		if(strncmp(line, extension, strlen(extension)) == 0) //Extension found
-		{
-			sscanf(line, "%*s %s", content_type); //Get content-type
-			break;
+				if(strncmp(line, extension, strlen(extension)) == 0) //Extension found
+				{
+					sscanf(line, "%*s %s", content_type); //Get content-type
+					break;
+				}
+			}
+			fclose(extension_file);
+			if(line)
+			{
+				free(line);
+			}
 		}
-	}
-
-	fclose(extension_file);
-	if(line)
-	{
-		free(line);
 	}
 }
