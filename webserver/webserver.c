@@ -81,7 +81,7 @@ void wait_for_connection(struct sockaddr_in address, int *listener)
 {
 	int new_socket;
 	pid_t pid;
-
+	signal(SIGCHLD, SIG_IGN);
 	int addrlen = sizeof(address);
 	while(1)
 	{
@@ -104,7 +104,7 @@ void wait_for_connection(struct sockaddr_in address, int *listener)
 		{
 			// This is the parent process
 			// Kill child process and close child socket
-			wait(NULL);
+			//wait(NULL);
 			close(new_socket);
 		}
 	}

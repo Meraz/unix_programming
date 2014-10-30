@@ -57,4 +57,4 @@ if ! [ -z "$id" ]; then
 fi
 
 echo $out
-`$out`
+eval ${out}

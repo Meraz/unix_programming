@@ -194,35 +194,26 @@ void get_content_type(char *extension, char *content_type)
 	size_t len = 0;
 	ssize_t read;
 
-	printf("Inside get_content_type...\n");
-
 	if(extension == NULL)
 	{
-		printf("extension == null\n");
 		extension_file = fopen("supported.extensions", "r");
 	}
 	else
 	{
-		printf("extension != null\n");
 		while((read = getline(&line, &len, extension_file)) != -1)
 		{
-			printf("while!\n");
 			if(line[0] == '#')
 			{
 				continue;
 			}
 
-			printf("extension: %s\n", extension);
-			printf("line: %s\n", line);
-
 			if(strncmp(line, extension, strlen(extension)) == 0) //Extension found
 			{
-				printf("Found match!\n");
 				sscanf(line, "%*s %s", content_type); //Get content-type
 				break;
 			}
 		}
+		rewind(extension_file);
 	}
-	rewind(extension_file);
 	free(line);
 }
