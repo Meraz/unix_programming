@@ -10,24 +10,30 @@ void handle_request(int new_socket);
 int main(int argc, char* argv[])
 {
 	struct sockaddr_in address;
-	char wsroot[32];
+	char *wsroot = NULL, wsroot_folder[32];
 	int port;
 	int daemon = 0;
 	char log_file[32] = "webserv.log";
 	int listener;
 
 	//Read values from config
-	read_config_file(&port, wsroot);
+	read_config_file(&port, wsroot_folder);
+	//Get full directory path
+	wsroot = get_full_path(wsroot_folder);
 	//Creates preferred root dir, if it does not exist
 	check_ws_root(wsroot);
 	//Parsing arguments
 	parse_arguments(argc, argv, &port, &daemon, log_file);
 	//Open/create file for logging
 	write_log(log_file, 0, NULL, NULL, NULL, NULL, 0, 0); 
-	//Set current dir
-	chdir(resolve_path(wsroot));
-	//TODO Set chroot...
-	
+	//Set current dir and root it
+	chdir(wsroot);
+	//TODO This SHOULD work...
+	/*if(chroot("/home/ironman/gitrepos/unix_programming/webserver/wsroot") != 0)
+	{
+		exit(1);
+	}
+	setuid(1000);*/
 	//If daemon flag is set, run as daemon
 	if(daemon)
 	{
@@ -138,7 +144,7 @@ void handle_request(int new_socket)
 			//File opens, 200
 			create_ok_header(uri, buffer);
 			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-			if(bytes_sent += sendfile(new_socket, openfile, NULL, /*filesize*/512) == -1)
+			if((bytes_sent += sendfile(new_socket, openfile, NULL, /*filesize*/512)) == -1)
 			{
 				//Error sending file, 500
 				strcpy(buffer,"HTTP/1.0 500 Internal Server Error\r\n");

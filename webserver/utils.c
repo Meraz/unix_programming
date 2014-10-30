@@ -37,13 +37,18 @@ void read_config_file(int *port, char *wsroot)
 	}
 }
 
+char *get_full_path(char *folder)
+{
+	char *executing_directory = getenv("PWD");
+	return strcat(executing_directory, folder);
+}
+
 void check_ws_root(char *wsroot)
 {
-	char *executing_directory;
 	struct stat l_stat = {0};
-	if (stat(resolve_path(wsroot), &l_stat) == -1) // if the folder does not exist, create it
+	if (stat(wsroot, &l_stat) == -1) // if the folder does not exist, create it
 	{
-		mkdir(resolve_path(wsroot), 0700);
+		mkdir(wsroot, 0700);
 	}
 }
 

@@ -12,6 +12,7 @@
 #include<signal.h>
 
 void read_config_file(int *port, char *wsroot);
+char *get_full_path(char *folder);
 void check_ws_root(char *wsroot);
 void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request_type, char *request_file, int status, int bytes);
 void daemonize();
