@@ -12,12 +12,6 @@
 #define BUFSIZE 4096
 #define MAX_QUEUE 20
 
-struct mime_types
-{
-	char content_type[80];
-	char ending[7][10];
-};
-
 void read_config_file(int *port, char *wsroot);
 void check_ws_root(char *wsroot);
 void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_file);
@@ -298,6 +292,7 @@ void create_ok_header(char *uri, char *buffer)
 	//TODO Fix error where the below code does some magic to URI...
 	strcpy(buffer,"HTTP/1.0 200 OK\r\nContent-Type: ");
 	strcat(buffer, content_type);
+	//TODO Add Content-Length?
 	strcat(buffer, "\r\n\r\n");
 }
 
