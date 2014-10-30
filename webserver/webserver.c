@@ -13,14 +13,12 @@ int main(int argc, char* argv[])
 	char *wsroot = NULL, wsroot_folder[32];
 	int port;
 	int daemon = 0;
-	char log_file[32] = "webserv.log";
+	char* log_file = NULL;
 	int listener;
 	char *extension = NULL;
 	
-	// Open sys log
-	openlog ("wserver", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
-	write_syslog("Starting up");
-
+	openlog ("wserver", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+	
 	//Read values from config
 	read_config_file(&port, wsroot_folder);
 	//Get full directory path
@@ -28,7 +26,7 @@ int main(int argc, char* argv[])
 	//Creates preferred root dir, if it does not exist
 	check_ws_root(wsroot);
 	//Parsing arguments
-	parse_arguments(argc, argv, &port, &daemon, log_file);
+	parse_arguments(argc, argv, &port, &daemon, &log_file);
 	//Open/create file for logging
 	write_log(log_file, 0, NULL, NULL, NULL, 0, 0); 
 	//Open supported.extensions file for later use

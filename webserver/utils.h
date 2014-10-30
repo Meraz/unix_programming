@@ -16,6 +16,7 @@
 
 
 void read_config_file(int *port, char *wsroot);
+void parse_arguments(int argc, char **argv, int *port, int *daemon, char **log_file);
 char *get_full_path(char *folder);
 void check_ws_root(char *wsroot);
 void write_log(char *file_name, int sockfd, char *ident, char *auth, char *request, int status, int bytes);

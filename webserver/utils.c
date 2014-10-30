@@ -52,7 +52,7 @@ void check_ws_root(char *wsroot)
 	}
 }
 
-void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_file)
+void parse_arguments(int argc, char **argv, int *port, int *daemon, char **log_file)
 {
 	int opt;
 	while((opt = getopt(argc, argv, "p:dl:")) != -1)
@@ -66,7 +66,8 @@ void parse_arguments(int argc, char **argv, int *port, int *daemon, char *log_fi
 				*daemon = 1;
 				break;
 			case 'l':
-				strcpy(log_file, optarg);
+				*log_file = malloc(32*4);	//	´breaks if logfilename is bigger than 32
+				strcpy(*log_file, optarg);	
 				break;
 		}
 	}
@@ -77,7 +78,10 @@ void write_log(char *file_name, int sockfd, char *ident, char *auth, char *reque
 	static FILE *file = NULL;
 	if(file == NULL) 
 	{
-		file = fopen(file_name, "a+");
+		if(file_name != NULL)
+		{
+			file = fopen(file_name, "a+");
+		}
 	} 
 
 	if(sockfd == 0) 
@@ -101,17 +105,15 @@ void write_log(char *file_name, int sockfd, char *ident, char *auth, char *reque
 	
 	//Writing data to file
 	strftime(now, 32, "%d/%b/%Y:%T %z", brokentime);
-	fprintf(file, "%s %s %s [%s] \"%s\" %d %d \n", buf, ident, auth, now, request, status, bytes);
-	fflush(file);	
-}
-
-void write_syslog(char *msg)
-{
-	if(strlen(msg) > 64) 
+	if(file == NULL && file_name == NULL)
 	{
-		return;
+		syslog(LOG_NOTICE, "%s %s %s [%s] \"%s\" %d %d \n", buf, ident, auth, now, request, status, bytes);
 	}
-	syslog(LOG_ERR, "%s", msg);
+	else
+	{
+		fprintf(file, "%s %s %s [%s] \"%s\" %d %d \n", buf, ident, auth, now, request, status, bytes);
+		fflush(file);	
+	}	
 }
 
 void daemonize()
