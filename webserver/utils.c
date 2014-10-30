@@ -152,11 +152,7 @@ void daemonize(int lfp, int efp)
     int x;
     for (x = sysconf(_SC_OPEN_MAX); x>0; x--)
     {
-    	if(x == lfp || x == efp)
-    	{
-    		printf("Skipping %d\n", x);
-    	}
-    	else
+    	if(x != lfp && x != efp)
     	{
     		close(x);
     	}
