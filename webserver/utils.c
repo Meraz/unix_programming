@@ -187,37 +187,42 @@ char *get_extension(char *path)
     return dot + 1;
 }
 
-void *get_content_type(char *extension, char *content_type)
+void get_content_type(char *extension, char *content_type)
 {
-	static FILE *extension_file = NULL;
+	static FILE *extension_file;
 	char *line = NULL;
 	size_t len = 0;
 	ssize_t read;
 
-	if(extension_file == NULL)
+	printf("Inside get_content_type...\n");
+
+	if(extension == NULL)
 	{
+		printf("extension == null\n");
 		extension_file = fopen("supported.extensions", "r");
-
-		if(extension != NULL)
+	}
+	else
+	{
+		printf("extension != null\n");
+		while((read = getline(&line, &len, extension_file)) != -1)
 		{
-			while((read = getline(&line, &len, extension_file)) != -1)
+			printf("while!\n");
+			if(line[0] == '#')
 			{
-				if(line[0] == '#')
-				{
-					continue;
-				}
-
-				if(strncmp(line, extension, strlen(extension)) == 0) //Extension found
-				{
-					sscanf(line, "%*s %s", content_type); //Get content-type
-					break;
-				}
+				continue;
 			}
-			fclose(extension_file);
-			if(line)
+
+			printf("extension: %s\n", extension);
+			printf("line: %s\n", line);
+
+			if(strncmp(line, extension, strlen(extension)) == 0) //Extension found
 			{
-				free(line);
+				printf("Found match!\n");
+				sscanf(line, "%*s %s", content_type); //Get content-type
+				break;
 			}
 		}
 	}
+	rewind(extension_file);
+	free(line);
 }
