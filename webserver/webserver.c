@@ -152,7 +152,10 @@ void handle_request(int new_socket)
 			//File opens, 200
 			create_ok_header(uri, buffer);
 			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
-			if((bytes_sent += sendfile(new_socket, openfile, NULL, /*filesize*/512)) == -1)
+
+			struct stat st;
+			stat(uri, &st);	// get size
+			if((bytes_sent += sendfile(new_socket, openfile, NULL, (int)st.st_size)) == -1)
 			{
 				//Error sending file, 500
 				strcpy(buffer,"HTTP/1.0 500 Internal Server Error\r\n");
