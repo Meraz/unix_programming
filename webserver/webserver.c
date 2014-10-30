@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	//Set current dir
 	chdir(resolve_path(wsroot));
 	//TODO Set chroot...
-
+	
 	//If daemon flag is set, run as daemon
 	if(daemon)
 	{
@@ -101,6 +101,7 @@ void handle_request(int new_socket)
 	char *httpv = NULL;
 	char *rp = NULL;
 	int openfile;
+	int bytes_sent = 0;
 
 	recv(new_socket, buffer, BUFSIZE, 0);
 
@@ -113,8 +114,8 @@ void handle_request(int new_socket)
 	if ((strcmp(httpv, "HTTP/1.0") != 0 && strcmp(httpv, "HTTP/1.1") != 0))
 	{
 		strcpy(buffer, "HTTP/1.0 400 Bad Request\r\n");
-		send(new_socket, buffer, strlen(buffer), 0);
-		write_log(NULL, new_socket, "-", "-", "GET", "Bad Request", 400, 0);
+		bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+		write_log(NULL, new_socket, "-", "-", "GET", "Bad Request", 400, bytes_sent);
 		goto closing_down;
 	}
 
@@ -123,8 +124,8 @@ void handle_request(int new_socket)
 	{
 		//File does not exist, 404
 		strcpy(buffer, "HTTP/1.0 404 Not Found\r\n");
-		send(new_socket, buffer, strlen(buffer), 0);
-		write_log(NULL, new_socket, "-", "-", "GET ", rp, 404, 0);
+		bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+		write_log(NULL, new_socket, "-", "-", "GET ", uri, 404, bytes_sent);
 		goto closing_down;
 	}
 
@@ -136,25 +137,25 @@ void handle_request(int new_socket)
 		{
 			//File opens, 200
 			create_ok_header(uri, buffer);
-			send(new_socket, buffer, strlen(buffer), 0);
-			if(sendfile(new_socket, openfile, NULL, /*filesize*/244) == -1)
+			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+			if(bytes_sent += sendfile(new_socket, openfile, NULL, /*filesize*/512) == -1)
 			{
 				//Error sending file, 500
 				strcpy(buffer,"HTTP/1.0 500 Internal Server Error\r\n");
-				send(new_socket, buffer, strlen(buffer), 0);
-				write_log(NULL, new_socket, "-", "-", "GET ", uri, 500, 0);
+				bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+				write_log(NULL, new_socket, "-", "-", "GET ", uri, 500, bytes_sent);
 			}
 			else
 			{
-				write_log(NULL, new_socket, "-", "-", "GET ", uri, 200, 0);
+				write_log(NULL, new_socket, "-", "-", "GET ", uri, 200, bytes_sent);
 			}
 		}
 		else
 		{
 			//Can't open file, 403
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
-			send(new_socket, buffer, strlen(buffer), 0);
-			write_log(NULL, new_socket, "-", "-", "GET ", uri, 403, 0);
+			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+			write_log(NULL, new_socket, "-", "-", "GET ", uri, 403, bytes_sent);
 		}		
 	}
 	//HEAD requests
@@ -165,15 +166,15 @@ void handle_request(int new_socket)
 		{
 			//File opens, 200
 			create_ok_header(uri, buffer);
-			send(new_socket, buffer, strlen(buffer), 0);
-			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 200, 0);
+			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 200, bytes_sent);
 		}
 		else
 		{
 			//Can't open file, 403
 			strcpy(buffer, "HTTP/1.0 403 Forbidden\r\n");
-			send(new_socket, buffer, strlen(buffer), 0);
-			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 403, 0);
+			bytes_sent = send(new_socket, buffer, strlen(buffer), 0);
+			write_log(NULL, new_socket, "-", "-", "HEAD ", uri, 403, bytes_sent);
 		}
 	}
 	//All other requests
@@ -181,8 +182,8 @@ void handle_request(int new_socket)
 	{
 		//Not implemented, 501
 		strcpy(buffer, "HTTP/1.0 501 Not Implemented\r\n");
-		send(new_socket,buffer,strlen(buffer),0);
-		write_log(NULL, new_socket, "-", "-", "Invalid ", uri, 501, 0);
+		bytes_sent = send(new_socket,buffer,strlen(buffer),0);
+		write_log(NULL, new_socket, "-", "-", "Invalid ", uri, 501, bytes_sent);
 	}
 	closing_down:
 	free(rp);
