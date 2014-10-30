@@ -30,7 +30,6 @@ int main(int argc, char* argv[])
 	get_content_type(NULL, NULL);
 	//Set current dir and root it
 	chdir(wsroot);
-	//TODO This SHOULD work...
 	if(chroot(wsroot) != 0)
 	{
 		perror("chroot");
